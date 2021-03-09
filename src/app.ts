@@ -1,7 +1,8 @@
 import express from 'express'
+require('dotenv').config()
 import 'reflect-metadata'
 import createConnection from './database'
-import { router } from './routes'
+import  router  from './routes'
 
 
 createConnection()
