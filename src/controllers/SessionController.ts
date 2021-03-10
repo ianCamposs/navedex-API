@@ -1,38 +1,25 @@
 import { Request, Response } from "express";
-import UserRepository from '../repositories/UserRepository'
-import { getCustomRepository } from 'typeorm'
-import { compare } from 'bcryptjs'
-import { sign } from 'jsonwebtoken'
+import AuthenticateUserService from "../services/AuthenticateUserService";
 
 class SessionController {
-  async create(request: Request, response: Response) {
-    const { email, password } = request.body
+  async store(request: Request, response: Response) {
+    try {
+      const { email, password } = request.body
 
-    const userRepository = getCustomRepository(UserRepository)
+      const authenticateUser = new AuthenticateUserService()
 
-    const userExists = await userRepository.findOne({email})
+      const {user, webtoken} = await authenticateUser.execute(email, password)
 
-    if (!userExists) {
-      return response.status(400).json({error: 'User not found'})
+      return response.json({
+        webtoken,
+        user
+      })
     }
-
-    const correctPassword = await compare(password, userExists.password)
-
-    if (!correctPassword) {
-      return response.status(400).json({error: 'User not found'})
-    }
-
-    const webtoken = sign({}, `${process.env.HASH_JWT}`, {
-      subject: userExists.id,
-      expiresIn: '1d'
-    })
-
-    return response.json({
-      webtoken,
-      userExists
-    })
+   catch (err) {
+     return response.status(400).json({error: err.message})  
+   }
+    
   }
-
 }
 
 export default SessionController

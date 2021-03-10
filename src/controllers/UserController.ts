@@ -5,7 +5,7 @@ import UserRepository from '../repositories/UserRepository'
 import { hash } from 'bcryptjs'
 
 class UserController {
-  async create(request: Request, response: Response) {
+  async store(request: Request, response: Response) {
     const { email, password } = request.body
     
     const schema = yup.object().shape({
@@ -41,9 +41,6 @@ class UserController {
     })
 
     await userRepository.save(user)
-
-    //Removendo a senha do retorno JSON, pois é uma informação sensível 
-    delete user.password
 
     return response.status(200).json(user)
   }
