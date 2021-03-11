@@ -3,7 +3,8 @@ import { v4 as uuid } from 'uuid'
 import Naver from './Naver'
 import Project from './Projects'
 
-@Entity('naversProjects')
+
+@Entity('navers_Projects')
 class NaversProjects {
 
   @PrimaryColumn()
@@ -22,7 +23,14 @@ class NaversProjects {
   @ManyToOne(()=> Project)
   @JoinColumn({name: 'project_id'})
   project: Project
+  
+  constructor() {
+    if (!this.id) {
+      this.id = uuid()
+    }
+  }
 }
+
 
 
 export default NaversProjects

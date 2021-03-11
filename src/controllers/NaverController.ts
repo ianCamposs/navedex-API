@@ -1,13 +1,8 @@
 import NaverRepository from '../repositories/NaverRepository'
-import { Brackets, getCustomRepository, IsNull } from 'typeorm'
+import { getCustomRepository } from 'typeorm'
 import {  Request, Response } from 'express'
 import * as yup from 'yup'
 
-interface Query {
-  name: string
-  exp: number
-  sub: string
-}
 
 class NaverController {
   async store(request: Request, response: Response) {
@@ -28,13 +23,13 @@ class NaverController {
     const toDateBirthdate = new Date(`${birthdate}`)
     const toDateAdmission_date = new Date(`${admission_date}`)
     
-    const user_id = request.user.id
+    const userRequest_id = request.user.id
 
     const naverRespository = getCustomRepository(NaverRepository)
     
     const naver = naverRespository.create({
       name,
-      user_id,
+      user_id: userRequest_id,
       birthdate: toDateBirthdate,
       admission_date: toDateAdmission_date,
       job_role
@@ -47,7 +42,7 @@ class NaverController {
   }
 
   async index(request: Request, response: Response) {
-    const user_id = request.user.id
+    const userRequest_id = request.user.id
     
     const naverRespository = getCustomRepository(NaverRepository)
 
@@ -55,22 +50,75 @@ class NaverController {
     .find({where: request.query })
     
     const filteredNavers = navers.filter(function (naver) {
-      const naverFilter = naver.user_id === user_id
+      const naverFilter = naver.user_id === userRequest_id
       return naverFilter
     })
 
     return response.status(200).json(filteredNavers)
   }
 
-  async show(request: Request, response: Response){
+  async show(request: Request, response: Response) {
     const {id} = request.params
 
     const naverRepository = getCustomRepository(NaverRepository)
 
     const naver = await naverRepository.find({where: {id}})
     
+    if (!naver) {
+      return response.status(400).json({error: 'naver not found'})
+    }
 
     return response.status(200).json(naver)
+  }
+
+  async update(request: Request, response: Response) {
+    const { id, name, birthdate, admission_date, job_role} = request.body
+
+    const toDateBirthdate = new Date(`${birthdate}`)
+    const toDateAdmission_date = new Date(`${admission_date}`)
+    
+    const naverRepository = getCustomRepository(NaverRepository)
+
+    const userRequest_id = request.user.id
+    const naverOwnedByUser = await naverRepository.findOne({id})
+
+    if (naverOwnedByUser?.user_id != userRequest_id) {
+      return response.status(401).json({error: 'user not authorized'})
+    }
+
+    await naverRepository
+    .update(id, 
+      {name: name, 
+      birthdate: toDateBirthdate,
+      admission_date: toDateAdmission_date,
+      job_role: job_role
+      })
+
+    const updatedNaver = await naverRepository.findOne({id})
+
+    return response.status(200).json(updatedNaver)
+  }
+
+  async delete(request: Request, response: Response) {
+    const {id} = request.body
+
+    const naverRepository = getCustomRepository(NaverRepository)
+
+    const userRequest_id = request.user.id
+
+    const naverOwnedByUser = await naverRepository.findOne({id})
+
+    if (!naverOwnedByUser) {
+      return response.status(400).json({error: 'naver not found'})
+    }
+
+    if (naverOwnedByUser?.user_id != userRequest_id) {
+      return response.status(401).json({error: 'user not authorized'})
+    }
+
+    await naverRepository.delete({id})
+
+    return response.status(200).json({message: 'Naver deleted'})
   }
 }
 
