@@ -13,9 +13,9 @@ const sessionController = new SessionController()
 const naverController = new NaverController()
 const projectController = new ProjectController()
 
-router.post('/users', userController.store)
+router.post('/signup', userController.store)
 
-router.post('/sessions', sessionController.store)
+router.post('/login', sessionController.store)
 
 router.post('/navers', verifyJWT, naverController.store)
 router.get('/navers', verifyJWT, naverController.index)
@@ -24,5 +24,9 @@ router.put('/navers', verifyJWT, naverController.update)
 router.delete('/navers', verifyJWT, naverController.delete)
 
 router.post('/projects', verifyJWT, projectController.store)
+router.get('/projects', verifyJWT, projectController.index)
+router.get('projects/:id', verifyJWT, projectController.show)
+router.put('projects', verifyJWT, projectController.update)
+router.delete('projects', verifyJWT, projectController.delete)
 
 export default router

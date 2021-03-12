@@ -2,23 +2,26 @@ import NaverRepository from '../repositories/NaverRepository'
 import { getCustomRepository } from 'typeorm'
 import {  Request, Response } from 'express'
 import * as yup from 'yup'
+import NaversProjectsRepository from '../repositories/NaversProjectsRepository'
 
 
 class NaverController {
   async store(request: Request, response: Response) {
-    const {  name, birthdate, admission_date, job_role } = request.body
+    const {  name, birthdate, admission_date, job_role, projects } = request.body
 
+    /*
     const schema = yup.object().shape({
       name: yup.string().required(),
       birthdate: yup.string().required(),
       admission_date: yup.string().required(),
-      job_role: yup.string().required()
+      job_role: yup.string().required(),
+
     })
 
     if (!(await schema.isValid(request.body))) {
       return response.status(400).json({error: 'invalid requisition'})
     }
-
+    */
 
     const toDateBirthdate = new Date(`${birthdate}`)
     const toDateAdmission_date = new Date(`${admission_date}`)
@@ -37,7 +40,21 @@ class NaverController {
 
     await naverRespository.save(naver)
 
-    return response.status(200).json(naver)
+    const naversProjectsRepository = getCustomRepository(NaversProjectsRepository)
+
+    const naver_id = naver.id
+
+    const naverProjectsMap = projects.map((project_id: string) => {
+      return {
+        naver_id,
+        project_id
+      }
+    })
+
+    const navers_Projects = naversProjectsRepository.create(naverProjectsMap)
+    await naversProjectsRepository.save(navers_Projects)
+
+    return response.status(200).json({naver, projects})
 
   }
 
@@ -60,9 +77,12 @@ class NaverController {
   async show(request: Request, response: Response) {
     const {id} = request.params
 
-    const naverRepository = getCustomRepository(NaverRepository)
+    const naversProjectsRepository = getCustomRepository(NaversProjectsRepository)
 
-    const naver = await naverRepository.find({where: {id}})
+    const naver = await naversProjectsRepository
+    .findOne({where: {naver_id: id},
+    relations: ['naver', 'project']
+    })
     
     if (!naver) {
       return response.status(400).json({error: 'naver not found'})
@@ -72,7 +92,7 @@ class NaverController {
   }
 
   async update(request: Request, response: Response) {
-    const { id, name, birthdate, admission_date, job_role} = request.body
+    const { id, name, birthdate, admission_date, job_role, projects} = request.body
 
     const toDateBirthdate = new Date(`${birthdate}`)
     const toDateAdmission_date = new Date(`${admission_date}`)
@@ -88,15 +108,30 @@ class NaverController {
 
     await naverRepository
     .update(id, 
-      {name: name, 
+      {name, 
       birthdate: toDateBirthdate,
       admission_date: toDateAdmission_date,
-      job_role: job_role
+      job_role
       })
 
     const updatedNaver = await naverRepository.findOne({id})
 
-    return response.status(200).json(updatedNaver)
+    const naverProjectsMap = projects.map((project_id: string) => {
+      return {
+        naver_id: id,
+        project_id
+      }
+    })
+
+    const naversProjectsRepository = getCustomRepository(NaversProjectsRepository)
+
+    const naverProject = await naversProjectsRepository
+    .findOne({where: {naver_id: id}})
+
+    await naversProjectsRepository
+    .update(naverProject?.id as string, naverProjectsMap)
+    
+    return response.status(200).json({updatedNaver, projects})
   }
 
   async delete(request: Request, response: Response) {
