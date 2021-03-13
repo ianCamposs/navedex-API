@@ -15,7 +15,7 @@ class NaverController {
       birthdate: yup.string().required(),
       admission_date: yup.string().required(),
       job_role: yup.string().required(),
-      projects: yup.array().required()
+      projects: yup.array()
     })
 
     if (!(await schema.isValid(request.body))) {

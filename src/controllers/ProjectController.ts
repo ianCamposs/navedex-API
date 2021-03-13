@@ -10,7 +10,7 @@ class ProjectController {
 
     const schema = yup.object().shape({
       name: yup.string().required(),
-      navers: yup.array().required()
+      navers: yup.array()
     })
 
     if (!(await schema.isValid(request.body))) {
