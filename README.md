@@ -48,9 +48,36 @@ possível realizar o processo inverso.
 
 ![alt text](https://github.com/ianCamposs/navedex-API/blob/main/images/Modelagem%20do%20BD.PNG)
 
+<h1>Padrão das rotas </h1>
+
+router.post('/signup', userController.store)
+
+router.post('/login', sessionController.store)
+
+router.post('/navers', verifyJWT, naverController.store)
+
+router.get('/navers', verifyJWT, naverController.index)
+
+router.get('/navers/:id', verifyJWT, naverController.show)
+
+router.put('/navers/:id', verifyJWT, naverController.update)
+
+router.delete('/navers/:id', verifyJWT, naverController.delete)
+
+
+router.post('/projects', verifyJWT, projectController.store)
+
+router.get('/projects', verifyJWT, projectController.index)
+
+router.get('/projects/:id', verifyJWT, projectController.show)
+
+router.put('/projects/:id', verifyJWT, projectController.update)
+
+router.delete('/projects/:id', verifyJWT, projectController.delete)
+
 ## 🚀 Como Executar
 
-<h1>Configurações iniciais</h1>
+<h3>Configurações iniciais</h3>
 
 - Clone esse repositório
 
@@ -58,19 +85,19 @@ possível realizar o processo inverso.
 
 - Crie um arquivo .env e insira a sua Hash_jwt dentro do arquivo no padrão chave valor, dessa forma: HASH_JWT = sua hash
 
-<h1>Inicializando as Migrations</h1>
+<h3>Inicializando as Migrations</h3>
 
 - Use o script "migrations" para rodar as migrations do projeto, assim, criando o banco de dados Sqlite de acordo com as configurações do projeto, use `npm run migrations`
 
-<h1> :mag: Testes Automatizados </h1>
+<h2> :mag: Testes Automatizados </h2>
 
   Foram desenvolvido testes automatizados de integração para as funcionalidades de cadastros de usuário e login na ferramenta para geração de token JWT
 
-<h1>Configurações iniciais</h1>
+<h4>Configurações iniciais</h4>
 
 - Use o `npm run test` para executar os testes automatizados utilizando Jest. 
 
-<h1>Rodando a aplicação</h1>
+<h2>Rodando a aplicação</h2>
 
 - Use `npm run dev` para rodar a aplicação.
 
@@ -97,7 +124,7 @@ dos mesmos.
 
 ###Falha
 
-![alt text](https://github.com/ianCamposs/navedex-API/blob/main/images/Create%20user%202.PNG)
+![alt text](https://github.com/ianCamposs/navedex-API/blob/main/images/Create%20session%202.PNG)
 
 - Navers Index (Rota para listagem dos Navers)
 
