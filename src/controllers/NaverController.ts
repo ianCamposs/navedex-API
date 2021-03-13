@@ -9,19 +9,19 @@ class NaverController {
   async store(request: Request, response: Response) {
     const {  name, birthdate, admission_date, job_role, projects } = request.body
 
-    /*
+    
     const schema = yup.object().shape({
       name: yup.string().required(),
       birthdate: yup.string().required(),
       admission_date: yup.string().required(),
       job_role: yup.string().required(),
-
+      projects: yup.array().required()
     })
 
     if (!(await schema.isValid(request.body))) {
       return response.status(400).json({error: 'invalid requisition'})
     }
-    */
+    
 
     const toDateBirthdate = new Date(`${birthdate}`)
     const toDateAdmission_date = new Date(`${admission_date}`)
@@ -81,7 +81,7 @@ class NaverController {
 
     const naver = await naversProjectsRepository
     .findOne({where: {naver_id: id},
-    relations: ['naver', 'project']
+    relations: ['naver', 'project'],
     })
     
     if (!naver) {
@@ -92,19 +92,26 @@ class NaverController {
   }
 
   async update(request: Request, response: Response) {
-    const { id, name, birthdate, admission_date, job_role, projects} = request.body
+    const { name, birthdate, admission_date, job_role, projects} = request.body
+    const {id} = request.params
 
-    const toDateBirthdate = new Date(`${birthdate}`)
-    const toDateAdmission_date = new Date(`${admission_date}`)
-    
     const naverRepository = getCustomRepository(NaverRepository)
 
     const userRequest_id = request.user.id
     const naverOwnedByUser = await naverRepository.findOne({id})
+    
+    if (!naverOwnedByUser) {
+      return response.status(400).json({error: 'naver not found'})
+    }
 
     if (naverOwnedByUser?.user_id != userRequest_id) {
       return response.status(401).json({error: 'user not authorized'})
     }
+
+    const toDateBirthdate = new Date(`${birthdate}`)
+    const toDateAdmission_date = new Date(`${admission_date}`)
+    
+
 
     await naverRepository
     .update(id, 
@@ -114,6 +121,7 @@ class NaverController {
       job_role
       })
 
+    
     const updatedNaver = await naverRepository.findOne({id})
 
     const naverProjectsMap = projects.map((project_id: string) => {
@@ -122,21 +130,28 @@ class NaverController {
         project_id
       }
     })
+    
 
     const naversProjectsRepository = getCustomRepository(NaversProjectsRepository)
-
-    const naverProject = await naversProjectsRepository
-    .findOne({where: {naver_id: id}})
-
-    await naversProjectsRepository
-    .update(naverProject?.id as string, naverProjectsMap)
     
+    await naversProjectsRepository.createQueryBuilder()
+    .delete()
+    .where('naver_id = :naver_id', {naver_id: id})
+    .execute()
+
+    
+    const newNaverProject = naversProjectsRepository.create(naverProjectsMap)
+    await naversProjectsRepository.save(newNaverProject)
+     
+    
+      
     return response.status(200).json({updatedNaver, projects})
+  
   }
 
   async delete(request: Request, response: Response) {
-    const {id} = request.body
-
+    const {id} = request.params
+    
     const naverRepository = getCustomRepository(NaverRepository)
 
     const userRequest_id = request.user.id

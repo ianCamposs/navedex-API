@@ -2,11 +2,20 @@ import { Request, Response } from "express";
 import { getCustomRepository}  from 'typeorm'
 import ProjectRepository from "../repositories/ProjectRepository";
 import NaversProjectsRepository from '../repositories/NaversProjectsRepository'
-
+import * as yup from 'yup'
 
 class ProjectController {
   async store(request: Request, response: Response) {
     const { name, navers } = request.body
+
+    const schema = yup.object().shape({
+      name: yup.string().required(),
+      navers: yup.array().required()
+    })
+
+    if (!(await schema.isValid(request.body))) {
+      return response.status(400).json({error: 'invalid requisition'})
+    }
 
     const userRequest_id = request.user.id
 
@@ -32,12 +41,7 @@ class ProjectController {
 
     const navers_Projects = naversProjectsRepository.create(naverProjectsMap)
     await naversProjectsRepository.save(navers_Projects)
-    /*
-    const projectWithNaver = await naversProjectsRepository
-    .findOne({where: {project_id: project.id},
-    relations: ['naver', 'project']
-    }) 
-    */
+    
     return response.status(200).json({name: project.name, navers})
   }
 
@@ -69,13 +73,13 @@ class ProjectController {
     if (!project) {
       return response.status(400).json({error: 'project not found'})  
     }
-
-    return response.status(200).json(project)
+  
+    return response.status(200).json({project})
   }
 
   async update(request: Request, response: Response) {
-    const {id, name, navers } = request.body
-
+    const {name, navers } = request.body
+    const {id} = request.params
     const userRequest_id = request.user.id
 
     const projectRepository = getCustomRepository(ProjectRepository)
@@ -94,9 +98,7 @@ class ProjectController {
       {
         name
       })
-    
-    const project = await projectRepository.findOne({id})
-    
+        
     const naverProjectsMap = navers.map((naver_id: string) => {
       return {
         naver_id,
@@ -104,23 +106,21 @@ class ProjectController {
       }
     })
     
-    /////////////////
-    console.log('map',naverProjectsMap)
-
-
     const naversProjectsRepository = getCustomRepository(NaversProjectsRepository)
 
-    const naverProject = await naversProjectsRepository
-    .findOne({where: {project_id: id}})
+    await naversProjectsRepository.createQueryBuilder()
+    .delete()
+    .where('project_id = :project_id', {project_id: id})
+    .execute()
 
-    await naversProjectsRepository
-    .update(naverProject?.id as string, naverProjectsMap)
+    const newNaverProject = naversProjectsRepository.create(naverProjectsMap)
+    await naversProjectsRepository.save(newNaverProject)
 
-    return response.status(200).json({name: project?.id, navers})
+    return response.status(200).json({name, navers})
   }
   
   async delete(request: Request, response: Response) {
-    const {id} = request.body
+    const {id} = request.params
 
     const projectRepository = getCustomRepository(ProjectRepository)
 

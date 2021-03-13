@@ -42,7 +42,7 @@ class UserController {
 
     await userRepository.save(user)
 
-    return response.status(200).json(user)
+    return response.status(200).json({message: 'User successfully registered '})
   }
 }
 
