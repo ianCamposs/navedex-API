@@ -98,13 +98,6 @@ class ProjectController {
       {
         name
       })
-        
-    const naverProjectsMap = navers.map((naver_id: string) => {
-      return {
-        naver_id,
-        project_id: id
-      }
-    })
     
     const naversProjectsRepository = getCustomRepository(NaversProjectsRepository)
 
@@ -113,6 +106,14 @@ class ProjectController {
     .where('project_id = :project_id', {project_id: id})
     .execute()
 
+
+    const naverProjectsMap = navers.map((naver_id: string) => {
+      return {
+        naver_id,
+        project_id: id
+      }
+    })
+    
     const newNaverProject = naversProjectsRepository.create(naverProjectsMap)
     await naversProjectsRepository.save(newNaverProject)
 
